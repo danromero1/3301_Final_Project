@@ -23,6 +23,27 @@ char fetch_byte();
 char validate_data(char whole_Major, char decimal_Minor, char whole_Major, char decimal_Minor, char checkSum);
 void display_readings(char whole_Humidity, char whole_Temperature);
 
+// Configuration for ADC
+void setupADC() {
+    ADCON1bits.VCFG1 = 0; // VREF- = VSS (Ground)
+    ADCON1bits.VCFG0 = 1; // VREF+ = External (Sensor Output)
+
+    ADCON0bits.CHS = 0;   // Select AN0 as input channel
+    ADCON0bits.ADON = 1;  // Turn on ADC module
+
+    ADCON2bits.ADCS = 2;  // ADC clock = FOSC/32
+    ADCON2bits.ACQT = 2;  // Acquisition time = 4 TAD
+    ADCON2bits.ADFM = 1;  // Right-justified result
+}
+
+// Read ADC value
+unsigned int readADC() {
+    ADCON0bits.GO = 1;          // Start conversion
+    while (ADCON0bits.GO);      // Wait for conversion to complete
+    return (ADRESH << 8) | ADRESL; // Return 10-bit result
+}
+
+
 void main(void) {
     
     OSCCON = 0x60;  
@@ -31,11 +52,21 @@ void main(void) {
     LCD_clear();    
     
     char whole_Humidity, decimal_Humidity, whole_Temperature, decimal_Temperature, checksum;
+
+    setupADC();
+    
+    unsigned int adcValue;
+    float windSpeedVoltage;
+
     
     const int wbgt; 
     enum { NO = 1, LOW, MODERATE, HIGH, EXTREME }; 
     
     while(1){
+        
+        adcValue = readADC();
+        windSpeedVoltage = (adcValue * 1.2) / 1024.0; // Calculate voltage (assuming VREF+ = 1.2V)
+        // Use windSpeedVoltage for calculations or display
         
         initiate_sensor();
         
@@ -150,3 +181,4 @@ void display_readings(char whole_Humidity, char whole_Temperature) {
 char validate_data(char whole_Humidity, char decimal_Humidity, char whole_Temperature, char decimal_Temperature, char checkSum) {
     return (checkSum == (whole_Humidity + decimal_Humidity + whole_Temperature + decimal_Temperature));
 }
+
