@@ -18,11 +18,13 @@
 #define SENSOR_PORT PORTCbits.RC1  //DHT11
 #define SENSOR_DIR TRISCbits.TRISC1
 
+//Functions for Temp/Humidity Sensor
 void initiate_sensor();
 char fetch_byte();
 char validate_data(char whole_Major, char decimal_Minor, char whole_Major, char decimal_Minor, char checkSum);
 void display_readings(char whole_Humidity, char whole_Temperature);
 
+<<<<<<< HEAD
 // Configuration for ADC
 void setupADC() {
     ADCON1bits.VCFG1 = 0; // VREF- = VSS (Ground)
@@ -44,7 +46,55 @@ unsigned int readADC() {
 }
 
 
+=======
+// Function Prototypes for I2C
+void I2C_Init(void);
+void I2C_Start(void);
+void I2C_Stop(void);
+void I2C_Write(unsigned char data);
+unsigned char I2C_Read(unsigned char ack);
+
+
+//Functions for Light Sensor
+void BH1750_Init(void);
+unsigned int BH1750_Read_Light(void);
+
+>>>>>>> 4f07935 (Added the start of light sensor code)
 void main(void) {
+    
+    //Start Light Sensor Commands
+    unsigned int lux_raw;
+    float lux;
+
+    // Initialize I2C and LCD
+    I2C_Init();
+    LCD_init();
+
+    // Display initialization message
+    LCD_clear();
+    LCD_cursor_set(1, 1);
+    LCD_write_string("Initializing...");
+    __delay_ms(2000);
+
+    // Initialize BH1750
+    BH1750_Init();
+    __delay_ms(180); // Wait for sensor initialization
+
+    while (1) {
+        // Read light intensity from BH1750
+        lux_raw = BH1750_Read_Light();
+        lux = lux_raw / 1.2; // Convert raw value to lux
+
+        // Display light intensity on LCD
+        LCD_clear();
+        LCD_cursor_set(1, 1);
+        LCD_write_string("Light Intensity:");
+        LCD_cursor_set(2, 1);
+        LCD_write_float(lux, 5, 2); // Display lux with 2 decimal places
+        LCD_write_string(" lx");
+
+        __delay_ms(1000); // Update every second
+    }
     
     OSCCON = 0x60;  
     ADCON1 = 0x0F;  
